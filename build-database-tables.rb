@@ -3,7 +3,7 @@ require 'data_active'
 
 
 if ENV['CBDB_EXPORT_DIRECTORY'] == nil
-  puts 'You must set CBDB_EXPORT_DIRECTORY to the location '
+  puts 'You must set CBDB_EXPORT_DIRECTORY to the location ' +
        'holding the access xml files.'
   abort
 else
@@ -17,9 +17,16 @@ ActiveRecord::Base.establish_connection(
 )
 
 class NianHao < ActiveRecord::Base
+  belongs_to :dynasty
 end
 
 class Dynasty < ActiveRecord::Base
+end
+
+class GanzhiCode < ActiveRecord::Base
+end
+
+class BiogMain < ActiveRecord::Base
 end
 
 unless NianHao.table_exists?
@@ -39,6 +46,22 @@ unless NianHao.table_exists?
         t.integer :c_start
         t.integer :c_end
         t.integer :c_sort
+      end
+
+      create_table :ganzhi_code do |t|
+        t.string :c_ganzhi_chn
+      end
+
+      create_table :biog_mains do |t|
+        t.string :c_name
+        t.string :c_name_chn
+        t.integer :c_birthyear
+        t.integer :c_deathyear
+        t.string :c_surname
+        t.string :c_surname_chn
+        t.string :c_mingzi
+        t.string :c_mingzi_chn
+        t.integer :c_dy
       end
     end
   end
@@ -72,6 +95,23 @@ File.open(File.join(CBDB_EXPORT_DIRECTORY, 'DYNASTIES.xml')) do |f|
   puts Dynasty.all.count
 end
 
+File.open(File.join(CBDB_EXPORT_DIRECTORY, 'GANZHI_CODES.xml')) do |f|
+  contents = f.read
+  contents.gsub!('GANZHI_CODES', 'ganzhi_code')
+
+  print "Importing Ganzhi ... "
+  GanzhiCode.many_from_xml contents, [:sync]
+  puts GanzhiCode.all.count
+end
+
+File.open(File.join(CBDB_EXPORT_DIRECTORY, 'BIOG_MAINaccessdel.xml')) do |f|
+  contents = f.read
+  contents.gsub!('BIOG_MAIN', 'biog_main')
+
+  print "Importing Biographies ... "
+  BiogMain.many_from_xml contents, [:sync]
+  puts BiogMain.all.count
+end
 
 if nil
 nianhaos = NianHao.all
@@ -81,6 +121,11 @@ end
 
 dynasties = Dynasty.all
 dynasties.each do |d|
+  puts "#{d.inspect}"
+end
+
+ganzhi_codes = GanzhiCode.all
+ganzhi_codes.each do |d|
   puts "#{d.inspect}"
 end
 end
